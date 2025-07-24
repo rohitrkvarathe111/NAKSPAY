@@ -39,7 +39,7 @@ def get_org_types():
 
 
 
-@router.post("/register", response_model=OrgCreateResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/onboard-org", response_model=OrgCreateResponse, status_code=status.HTTP_201_CREATED)
 async def add_org(org_user: CompanySetup, db: AsyncSession = Depends(get_db)):
 
     email = org_user.org.org_email
