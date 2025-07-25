@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from orgist.models import Orgist
+from orgist.models import Orgist, OrgistProfile
 from orgist.schemas import OrgCreate, CompanySetup
-from users.models import User
+from users.models import User, UserProfile
 from help_fun.auth_helpers import generate_username, hash_password
     
 
@@ -25,6 +25,18 @@ async def create_orgist_user(db: AsyncSession, org_user: CompanySetup):
         db.add(db_org)
         await db.flush()  # flush to get db_org.id without commit
 
+        org_pro = {
+            "orgist_id": db_org.id,
+            "org_uc": org_uc,
+        }
+
+        created_by = {
+            "created_by": 2,
+            "updated_by": 2
+        }
+
+        db_org_pro = OrgistProfile(**org_pro, **created_by)
+
         user_data = user.dict()
         user_data.update({
             "user_uc": org_uc,
@@ -37,7 +49,11 @@ async def create_orgist_user(db: AsyncSession, org_user: CompanySetup):
         })
         db_user = User(**user_data)
         db.add(db_user)
+        await db.flush()
+        
+        db_user_pro = UserProfile(**{"user_id": db_user.id}, **created_by)
 
+        db.add_all([db_org_pro, db_user_pro])
         await db.commit()
         return db_org 
 

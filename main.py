@@ -6,8 +6,8 @@ from orgist.models import Orgist
 from database import engine, Base
 from fastapi.responses import RedirectResponse
 
-app = FastAPI()
-
+# app = FastAPI()
+app = FastAPI(debug=True)
 
 #================ This code is used for redirect any url on doc or swegger ================#
 # @app.get("/", include_in_schema=False)

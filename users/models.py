@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, func, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, func, ForeignKey, Date, JSON
 from database import Base
 from sqlalchemy.orm import relationship
 from enum import Enum
@@ -48,3 +48,32 @@ class User(Base):
 
 
     org = relationship("Orgist", back_populates="users")
+
+
+
+
+class UserProfile(Base):
+    __tablename__ = "user_profile"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    profile_img = Column(String(150), nullable=True)
+    identity_type = Column(String(50), nullable=True)
+    identity_no = Column(String(70), nullable=True)
+    identity_img = Column(String(150), nullable=True)
+    identity_verified = Column(Boolean, default=False)
+    dob = Column(Date, nullable=True)
+    gender = Column(String(10), nullable=True)
+    address = Column(String(150), nullable=True)
+    city = Column(String(50), nullable=True)
+    state = Column(String(50), nullable=True)
+    country = Column(String(50), nullable=True)
+    pincode = Column(Integer, nullable=True)
+    website = Column(String(150), nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    is_active = Column(Boolean, default=True)
+    role = Column(String(150), nullable=True)
+    preferences = Column(JSON, nullable=True)
