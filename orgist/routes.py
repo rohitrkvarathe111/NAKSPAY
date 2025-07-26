@@ -20,8 +20,8 @@ router = APIRouter()
 
 
 
-@router.get("/org-options")
-def get_org_types():
+@router.get("/options")
+def get_options():
 
     org_types = [{"code": item.name, "name": item.value} for item in OrgTypeEnum]
     org_categories = [{"code": item.name, "name": item.value} for item in OrgCateEnum]
@@ -40,7 +40,7 @@ def get_org_types():
 
 
 @router.post("/onboard-org", response_model=OrgCreateResponse, status_code=status.HTTP_201_CREATED)
-async def add_org(org_user: CompanySetup, db: AsyncSession = Depends(get_db)):
+async def add_orgist(org_user: CompanySetup, db: AsyncSession = Depends(get_db)):
 
     email = org_user.org.org_email
 
