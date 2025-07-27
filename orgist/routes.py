@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Depends
+from fastapi import APIRouter, Depends, HTTPException, status, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, select
@@ -7,6 +7,8 @@ from orgist.schemas import OrgCreate, OrgCreateResponse, CompanySetup
 from orgist.crud import create_orgist_user
 from orgist.models import Orgist, OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum
 from users.models import UserTypeEnum, User
+from users.routes import oauth2_scheme
+from help_fun.auth_helpers import get_current_user
 import asyncio
 
 
@@ -14,7 +16,6 @@ import asyncio
 
 
 router = APIRouter()
-
 
 
 
@@ -40,7 +41,12 @@ def get_options():
 
 
 @router.post("/onboard-org", response_model=OrgCreateResponse, status_code=status.HTTP_201_CREATED)
-async def add_orgist(org_user: CompanySetup, db: AsyncSession = Depends(get_db)):
+async def add_orgist(org_user: CompanySetup, db: AsyncSession = Depends(get_db), token: str = Security(oauth2_scheme)):
+
+    payload = get_current_user(token)
+    if payload["user_type"] != UserTypeEnum.SUPER_ADMIN.value:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
+                            detail="You are not allowed to create an Orgist. Only Super Admins have permission to perform this action.")
 
     email = org_user.org.org_email
 

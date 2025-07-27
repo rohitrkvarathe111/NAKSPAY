@@ -3,6 +3,10 @@ import random
 import string
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+
+
 
 
 
@@ -39,11 +43,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 # ------------------------- JWT TOKEN GENERATOR ------------------------- #
-SECRET_KEY = "your-secret-access-key"
-REFRESH_SECRET_KEY = "your-secret-refresh-key"
+SECRET_KEY = "NaksPay_Secret_key"
+REFRESH_SECRET_KEY = "NaksPay_Secret_key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
@@ -63,3 +71,11 @@ def verify_token(token: str, is_refresh: bool = False):
         return jwt.decode(token, key, algorithms=[ALGORITHM])
     except JWTError:
         return None
+    
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    payload = verify_token(token)
+    # auth_user = payload.get("sub")
+    # if auth_user is None:
+    #     raise HTTPException(status_code=401, detail="Invalid token")
+    return payload
+

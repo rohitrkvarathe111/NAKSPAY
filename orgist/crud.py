@@ -43,7 +43,7 @@ async def create_orgist_user(db: AsyncSession, org_user: CompanySetup):
             "password_hash": hash_password(user.password_hash),
             "email": org.org_email,
             "phone_number": org.org_mobile,
-            "user_type": user.user_type.name,
+            "user_type": user.user_type,
             "user_level": org.org_high_level,
             "orgist_id": db_org.id
         })

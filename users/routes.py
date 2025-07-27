@@ -1,22 +1,23 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, Depends
+from fastapi import APIRouter, Depends, HTTPException, status, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, select
 from database import get_db
 from users.models import UserTypeEnum, User
 from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest
-from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token
+from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user
 from users.crud import create_user
 import asyncio
-from fastapi import Security
 from fastapi.security import OAuth2PasswordBearer
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
 
 
 router = APIRouter()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
 
 @router.post("/hii")
 def read_root():
@@ -25,10 +26,15 @@ def read_root():
 
 
 
-@router.post("/onboard-user", response_model=OnboardUserResponse, status_code=status.HTTP_201_CREATED)
-async def add_user(org_user: CreateUserProfile, db: AsyncSession = Depends(get_db)):
-    email = org_user.email
+@router.post("/onboard-user", response_model=OnboardUserResponse, status_code=status.HTTP_201_CREATED, dependencies=[Security(oauth2_scheme)])
+async def add_user(org_user: CreateUserProfile, db: AsyncSession = Depends(get_db), token: str = Security(oauth2_scheme)):
 
+    payload = get_current_user(token)
+    if payload["user_type"] != UserTypeEnum.SUPER_ADMIN.value:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
+                            detail="You are not allowed to create an User. Only Super Admins have permission to perform this action.")
+
+    email = org_user.email
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
