@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
-from help_fun.auth_helpers import generate_username
+from help_fun.auth_helpers import generate_username, hash_password
 from users.models import User, UserProfile
 from users.schemas import UserCreate
 
@@ -11,6 +11,7 @@ async def create_user(db: AsyncSession, user: UserCreate):
 
     user_data = user.dict()
     user_data["user_uc"] = org_uc
+    user_data["password_hash"] = hash_password(user_data["password_hash"])
     new_user = User(**user_data)
 
     try:
