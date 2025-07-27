@@ -4,15 +4,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, select
 from database import get_db
-from orgist.schemas import OrgCreate, OrgCreateResponse, CompanySetup
-from orgist.crud import create_orgist_user
-from orgist.models import Orgist, OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum
 from users.models import UserTypeEnum, User
-from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin
-from help_fun.auth_helpers import verify_password
+from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest
+from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token
 from users.crud import create_user
 import asyncio
+from fastapi import Security
+from fastapi.security import OAuth2PasswordBearer
 
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
 router = APIRouter()
@@ -65,8 +66,60 @@ async def user_login(user: UserLogin, db: AsyncSession = Depends(get_db)):
             detail="Incorrect password"
         )
     
-    return {"message": "Login successful", "user_id": db_user.id}
+    user_data = {
+        "user_id": db_user.id,
+        "first_name": db_user.first_name,
+        "last_name": db_user.last_name,
+        "user_type": db_user.user_type,
+        "user_level": db_user.user_level,
+        "timezone": db_user.timezone,
+    }
+
+    access_token = create_access_token(user_data)
+    refresh_token = create_refresh_token({"user_id": db_user.id})
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user_info": user_data,
+    }
+
+
+
+@router.post("/refresh")
+async def refresh_token(request: RefreshTokenRequest):
+
+    payload = verify_token(request.refresh_token, is_refresh=True)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+    
+    new_access_token = create_access_token({"user_id": user_id})
+
+    return {
+        "access_token": new_access_token,
+        "token_type": "bearer"
+    }
 
 
 
 
+
+@router.get("/me")
+async def get_user_info(token: str = Security(oauth2_scheme)):
+    payload = verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired access token")
+
+    return {
+        "user_id": payload.get("user_id"),
+        "first_name": payload.get("first_name"),
+        "last_name": payload.get("last_name"),
+        "user_type": payload.get("user_type"),
+        "user_level": payload.get("user_level"),
+        "timezone": payload.get("timezone")
+    }

@@ -1,6 +1,8 @@
 from passlib.context import CryptContext
 import random
 import string
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
 
 
 
@@ -32,3 +34,32 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
+
+
+
+# ------------------------- JWT TOKEN GENERATOR ------------------------- #
+SECRET_KEY = "your-secret-access-key"
+REFRESH_SECRET_KEY = "your-secret-refresh-key"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
+REFRESH_TOKEN_EXPIRE_DAYS = 7
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def create_refresh_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, REFRESH_SECRET_KEY, algorithm=ALGORITHM)
+
+def verify_token(token: str, is_refresh: bool = False):
+    try:
+        key = REFRESH_SECRET_KEY if is_refresh else SECRET_KEY
+        return jwt.decode(token, key, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
