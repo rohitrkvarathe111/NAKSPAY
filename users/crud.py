@@ -19,8 +19,8 @@ async def create_user(db: AsyncSession, user: UserCreate):
         await db.flush()
 
         created_by = {
-            "created_by": 2,
-            "updated_by": 2
+            "created_by": 22,
+            "updated_by": 22
         }
 
         db_user_pro = UserProfile(user_id=new_user.id, **created_by)

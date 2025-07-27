@@ -31,8 +31,8 @@ async def create_orgist_user(db: AsyncSession, org_user: CompanySetup):
         }
 
         created_by = {
-            "created_by": 2,
-            "updated_by": 2
+            "created_by": 22,
+            "updated_by": 22
         }
 
         db_org_pro = OrgistProfile(**org_pro, **created_by)
