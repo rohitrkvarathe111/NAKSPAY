@@ -108,7 +108,7 @@ async def user_login(user: UserLogin, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/refresh")
-async def refresh_token(request: RefreshTokenRequest):
+async def refresh_token(request: RefreshTokenRequest,  db: AsyncSession = Depends(get_db)):
 
     payload = verify_token(request.refresh_token, is_refresh=True)
     if not payload:
@@ -118,14 +118,38 @@ async def refresh_token(request: RefreshTokenRequest):
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid token payload")
     
-    new_access_token = create_access_token({"user_id": user_id})
+    result = await db.execute(select(User).where(User.id == user_id))
+    db_user = result.scalar_one_or_none()
+
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User does not exist"
+        )
+    
+    user_data = {
+        "user_id": db_user.id,
+        "first_name": db_user.first_name,
+        "last_name": db_user.last_name,
+        "user_type": db_user.user_type,
+        "user_level": db_user.user_level,
+        "timezone": db_user.timezone,
+    }
+    if db_user.orgist_id and db_user.user_type in [UserTypeEnum.ORGIST_ADMIN, UserTypeEnum.ORGIST_USER]:
+        result = await db.execute(
+            select(Orgist).where(Orgist.id == db_user.orgist_id)
+        )
+        orgist = result.scalar_one_or_none()
+        if orgist:
+            user_data["orgist_id"] = orgist.id
+            user_data["orgist_name"] = orgist.org_name
+    
+    new_access_token = create_access_token(user_data)
 
     return {
         "access_token": new_access_token,
         "token_type": "bearer"
     }
-
-
 
 
 
