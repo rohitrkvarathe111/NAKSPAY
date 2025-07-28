@@ -6,7 +6,7 @@ from sqlalchemy import or_, select
 from database import get_db
 from users.models import UserTypeEnum, User
 from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest
-from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user
+from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted
 from orgist.models import Orgist
 from users.crud import create_user
 import asyncio
@@ -143,3 +143,15 @@ async def get_user_info(token: str = Security(oauth2_scheme)):
         "user_level": payload.get("user_level"),
         "timezone": payload.get("timezone")
     }
+
+
+@router.post("/logout")
+async def logout(token: str = Depends(oauth2_scheme)):
+    if not token:
+        raise HTTPException(status_code=400, detail="Token is required")
+    
+    if is_token_blacklisted(token):
+        raise HTTPException(status_code=400, detail="Token is already blacklisted")
+    
+    blacklist_token(token)
+    return {"msg": "Successfully logged out"}
