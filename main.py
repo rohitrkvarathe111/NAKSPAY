@@ -4,10 +4,12 @@ from orgist import routes as org_routes
 from users.models import User
 from orgist.models import Orgist
 from database import engine, Base
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 # app = FastAPI()
 app = FastAPI(debug=True)
+templates = Jinja2Templates(directory="templates")  
 
 #================ This code is used for redirect any url on doc or swegger ================#
 # @app.get("/", include_in_schema=False)
@@ -31,8 +33,14 @@ async def startup():
         await conn.run_sync(Base.metadata.create_all)
 
 app.include_router(user_routes.router, prefix="/users", tags=["Users"])
-app.include_router(org_routes.router, prefix="/org", tags=["Org"])
+app.include_router(org_routes.router, prefix="/org", tags=["Orgist"])
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello"}
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request):
+    message = "Oops! The page you are looking for is lost in space."
+    error = 400
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "message": message,
+        "error": error
+    })

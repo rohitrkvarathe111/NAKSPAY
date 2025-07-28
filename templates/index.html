@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
+    <title>404 - Page Not Found</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            overflow: hidden;
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            position: relative;
+        }
+
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .error-content h1 {
+            font-size: 6rem;
+            font-weight: bold;
+            text-shadow: 4px 4px 20px rgba(0, 0, 0, 0.3);
+            animation: glow 1.5s infinite alternate;
+        }
+
+        .error-content p {
+            font-size: 1.8rem;
+            opacity: 0.9;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 4px 4px 20px rgba(0, 0, 0, 0.3);
+            }
+            to {
+                text-shadow: 6px 6px 25px rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        .lottie-animation {
+            width: 400px;
+            height: 400px;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+            margin-bottom: -70px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 28px;
+            font-size: 1.3rem;
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            border-radius: 30px;
+            text-decoration: none;
+            transition: 0.3s ease-in-out;
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            background: white;
+            color: #ff758c;
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6);
+        }
+
+        .floating-bubbles div {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            animation: float 10s infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            50% {
+                transform: translateY(-80px);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+        }
+
+        /* Mouse Trail Effect */
+        .trail {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 1;
+            animation: fadeOut 0.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(2);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="floating-bubbles"></div>
+    <div class="error-container">
+        <div class="lottie-animation"></div>
+        <div class="error-content">
+            <h1>{{ error }}</h1>
+            <p>{{ message }}</p>
+            <br>
+            <a href="#" class="btn">Back To Home</a>
+        </div>
+    </div>
+</body>
+
+<script>
+    // Load Lottie Animation
+    lottie.loadAnimation({
+        container: document.querySelector('.lottie-animation'),
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: 'https://lottie.host/d987597c-7676-4424-8817-7fca6dc1a33e/BVrFXsaeui.json'
+    });
+
+    // Generate more floating bubbles
+    const bubbleContainer = document.querySelector('.floating-bubbles');
+    for (let i = 0; i < 10; i++) {
+        let bubble = document.createElement('div');
+        bubble.style.left = `${Math.random() * 100}%`;
+        bubble.style.animationDuration = `${Math.random() * 5 + 5}s`;
+        bubbleContainer.appendChild(bubble);
+    }
+
+    // Mouse Trail Effect
+    document.addEventListener("mousemove", function(e) {
+        let trail = document.createElement("span");
+        trail.classList.add("trail");
+        document.body.appendChild(trail);
+        
+        trail.style.left = `${e.clientX}px`;
+        trail.style.top = `${e.clientY}px`;
+
+        setTimeout(() => {
+            trail.remove();
+        }, 500);
+    });
+
+    // Double Click Event
+    document.addEventListener("dblclick", function() {
+        alert("Do not double-click anywhere!");
+    });
+</script>
+
+</html>

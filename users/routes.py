@@ -7,6 +7,7 @@ from database import get_db
 from users.models import UserTypeEnum, User
 from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest
 from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user
+from orgist.models import Orgist
 from users.crud import create_user
 import asyncio
 from fastapi.security import OAuth2PasswordBearer
@@ -19,7 +20,12 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 
-@router.post("/hii")
+@router.post(
+    "/hii",
+    summary="Greet the user",
+    description="This API endpoint returns a simple greeting message to confirm the server is responding.",
+    response_description="A JSON message containing a greeting."
+)
 def read_root():
     return {"message": "Hello this is user"}
 
@@ -80,7 +86,15 @@ async def user_login(user: UserLogin, db: AsyncSession = Depends(get_db)):
         "user_level": db_user.user_level,
         "timezone": db_user.timezone,
     }
-
+    if db_user.orgist_id and db_user.user_type in [UserTypeEnum.ORGIST_ADMIN, UserTypeEnum.ORGIST_USER]:
+        result = await db.execute(
+            select(Orgist).where(Orgist.id == db_user.orgist_id)
+        )
+        orgist = result.scalar_one_or_none()
+        if orgist:
+            user_data["orgist_id"] = orgist.id
+            user_data["orgist_name"] = orgist.org_name
+    
     access_token = create_access_token(user_data)
     refresh_token = create_refresh_token({"user_id": db_user.id})
     
