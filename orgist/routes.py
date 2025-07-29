@@ -41,7 +41,7 @@ def get_options():
 
 
 
-@router.post("/onboard_org", response_model=OrgCreateResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/onboard_orgist", response_model=OrgCreateResponse, status_code=status.HTTP_201_CREATED)
 async def add_orgist(org_user: CompanySetup, db: AsyncSession = Depends(get_db), token: str = Security(oauth2_scheme)):
 
     payload = get_current_user(token)
@@ -131,7 +131,7 @@ async def get_orgist_by_id(
     }
     
 
-@router.post("/update_org", status_code=status.HTTP_200_OK)
+@router.put("/update_orgist", status_code=status.HTTP_200_OK)
 async def update_orgist(org_data: EditOrgist, 
                     db: AsyncSession = Depends(get_db), 
                     token: str = Security(oauth2_scheme)):

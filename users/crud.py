@@ -3,7 +3,8 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 from help_fun.auth_helpers import generate_username, hash_password
 from users.models import User, UserProfile
-from users.schemas import UserCreate
+from users.schemas import UserCreate, UserProfileUpdate
+from sqlalchemy import select
 
 
 async def create_user(db: AsyncSession, user: UserCreate, user_id: int):
@@ -40,3 +41,26 @@ async def create_user(db: AsyncSession, user: UserCreate, user_id: int):
         raise HTTPException(status_code=500, detail= f"UnexpectedError: {str(e)}")
 
 
+
+
+async def update_user_profile(db: AsyncSession, user_update: UserProfileUpdate, user_id: int):
+
+    try:
+        result = await db.execute(
+            select(UserProfile).where(UserProfile.user_id == user_id)
+        )
+        user_profile = result.scalar_one_or_none()
+
+        if not user_profile:
+            raise HTTPException(status_code=404, detail="User Profile not found")
+        
+        for field, value in user_update.dict(exclude_unset=True).items():
+            setattr(user_profile, field, value)
+
+        await db.commit()
+        await db.refresh(user_profile)
+        return user_profile
+    
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

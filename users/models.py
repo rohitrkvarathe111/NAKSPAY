@@ -26,6 +26,20 @@ class TimezoneEnum(str, Enum):
     ASIA_TOKYO = "Asia/Tokyo"
 
 
+class IdentityTypeEnum(str, Enum):
+    PASSPORT = "passport"
+    DRIVER_LICENSE = "driver_license"
+    AADHAAR = "aadhaar"
+    PAN = "pan"
+    VOTER_ID = "voter_id"
+    GREEN_CARD = "green_card"
+
+class GenderEnum(str, Enum):
+    MALE = "male"
+    FEMALE = "female"
+    OTHER = "other"
+    PREFER_NOT_TO_SAY = "prefer_not_to_say"
+
 
 class User(Base):
     __tablename__ = "users"

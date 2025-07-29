@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import datetime
-from users.models import UserTypeEnum, TimezoneEnum
+from datetime import datetime, date
+from users.models import UserTypeEnum, TimezoneEnum, IdentityTypeEnum, GenderEnum
 
 class UserCreate(BaseModel):
     first_name: str
@@ -40,3 +40,19 @@ class UserLogin(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class UserProfileUpdate(BaseModel):
+    profile_img: str
+    identity_type: IdentityTypeEnum
+    identity_no: str
+    identity_img: str
+    dob: date
+    gender: GenderEnum
+    address: str
+    city: str
+    state: str
+    country: str
+    pincode: int
+    website: str
+    

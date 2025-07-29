@@ -5,10 +5,10 @@ from sqlalchemy.future import select
 from sqlalchemy import or_, select
 from database import get_db
 from users.models import UserTypeEnum, User
-from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest
+from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest, UserProfileUpdate
 from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted
 from orgist.models import Orgist
-from users.crud import create_user
+from users.crud import create_user, update_user_profile
 import asyncio
 from fastapi.security import OAuth2PasswordBearer
 
@@ -59,7 +59,7 @@ async def add_user(org_user: CreateUserProfile, db: AsyncSession = Depends(get_d
     }
 
 
-@router.post("/login", status_code=status.HTTP_201_CREATED)
+@router.post("/login", status_code=status.HTTP_201_CREATED, summary="User Login")
 async def user_login(user: UserLogin, db: AsyncSession = Depends(get_db)):
     email = user.email
     password = user.password
@@ -108,7 +108,7 @@ async def user_login(user: UserLogin, db: AsyncSession = Depends(get_db)):
 
 
 
-@router.post("/refresh")
+@router.post("/refresh", status_code=status.HTTP_201_CREATED, summary="Generate a new access token using a refresh token")
 async def refresh_token(request: RefreshTokenRequest,  db: AsyncSession = Depends(get_db)):
 
     payload = verify_token(request.refresh_token, is_refresh=True)
@@ -163,7 +163,7 @@ async def ping(current_user: dict = Depends(get_current_user)):
 
 
 
-@router.get("/me")
+@router.get("/me", summary="Just for fun")
 async def get_user_info(token: str = Security(oauth2_scheme)):
     payload = verify_token(token)
     if not payload:
@@ -179,7 +179,7 @@ async def get_user_info(token: str = Security(oauth2_scheme)):
     }
 
 
-@router.post("/logout")
+@router.post("/logout", summary="Logout user")
 async def logout(token: str = Depends(oauth2_scheme)):
     if not token:
         raise HTTPException(status_code=400, detail="Token is required")
@@ -191,10 +191,25 @@ async def logout(token: str = Depends(oauth2_scheme)):
     return {"detail": "Successfully logged out"}
 
 
-# @router.put("/update_user", summary="Edit current user info")
-# async def edit_user(
-#     user_update: UserUpdate,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: dict = Depends(get_current_user)
-# ):
+@router.put("/update_user", summary="Edit current user info")
+async def update_user(
+        user_update: UserProfileUpdate,
+        db: AsyncSession = Depends(get_db),
+        current_user: dict = Depends(get_current_user)
+    ):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Invalid or expired access token")
+    user_id = current_user["user_id"]
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User does not exist")
+    
+    user_profile = await update_user_profile(db, user_update, user_id)
+    return {
+        "detail": "User profile updated successfully"
+        }
+    
+
+
+
+
 
