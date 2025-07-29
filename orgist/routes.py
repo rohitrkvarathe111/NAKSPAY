@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, select
+from sqlalchemy.orm import selectinload
 from database import get_db
 from orgist.schemas import OrgCreate, OrgCreateResponse, CompanySetup
 from orgist.crud import create_orgist_user
-from orgist.models import Orgist, OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum
-from users.models import UserTypeEnum, User
+from orgist.models import Orgist, OrgistProfile, OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum
+from users.models import UserTypeEnum, User, UserProfile
 from users.routes import oauth2_scheme
 from help_fun.auth_helpers import get_current_user
 import asyncio
@@ -72,4 +73,54 @@ async def add_orgist(org_user: CompanySetup, db: AsyncSession = Depends(get_db),
         "org_name": org_data.org_name,
     }
 
+
+# @router.get("/get_orgist")
+# async def get_orgist_by_id(
+#     id: int,  
+#     db: AsyncSession = Depends(get_db)
+# ):
+#     result = await db.execute(select(Orgist).where(Orgist.id == id))
+#     orgist = result.scalar_one_or_none()
+
+#     if not orgist:
+#         raise HTTPException(status_code=404, detail="Orgist not found")
+    
+#     result = await db.execute(select(OrgistProfile).where(OrgistProfile.orgist_id == id))
+#     orgist_profile = result.scalar_one_or_none()
+
+#     result = await db.execute(select(User).where(User.orgist_id == id))
+#     users = result.scalar_one_or_none()
+
+#     result = await db.execute(select(UserProfile).where(UserProfile.user_id == users.id))
+#     users_profile = result.scalar_one_or_none()
+
+#     return {
+#         "orgist": orgist,
+#         "orgist_profile": orgist_profile,
+#         "users": users,
+#         "users_profile": users_profile
+
+
+#     }
+
+
+@router.get("/get_orgist")
+async def get_orgist_by_id(
+    id: int,  
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.org))
+        .where(User.orgist_id == id)
+    )
+    users = result.scalar_one_or_none()
+
+    if not users or not users.orgist_id:
+        raise HTTPException(status_code=404, detail="Orgist not found")
+
+    return {
+        "orgist_id": users.orgist_id,
+        "org_name": users.org.org_name,
+    }
 

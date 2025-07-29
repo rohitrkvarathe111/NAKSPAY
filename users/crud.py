@@ -6,7 +6,7 @@ from users.models import User, UserProfile
 from users.schemas import UserCreate
 
 
-async def create_user(db: AsyncSession, user: UserCreate):
+async def create_user(db: AsyncSession, user: UserCreate, user_id: int):
     org_uc = await generate_username(user.user_type, user.first_name)
 
     user_data = user.dict()
@@ -20,8 +20,8 @@ async def create_user(db: AsyncSession, user: UserCreate):
         await db.flush()
 
         created_by = {
-            "created_by": 22,
-            "updated_by": 22
+            "created_by": user_id,
+            "updated_by": user_id
         }
 
         db_user_pro = UserProfile(user_id=new_user.id, **created_by)

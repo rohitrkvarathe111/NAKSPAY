@@ -36,6 +36,7 @@ def read_root():
 async def add_user(org_user: CreateUserProfile, db: AsyncSession = Depends(get_db), token: str = Security(oauth2_scheme)):
 
     payload = get_current_user(token)
+    user_id = payload.get("user_id")
     if payload["user_type"] != UserTypeEnum.SUPER_ADMIN.value:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
                             detail="You are not allowed to create an User. Only Super Admins have permission to perform this action.")
@@ -47,7 +48,7 @@ async def add_user(org_user: CreateUserProfile, db: AsyncSession = Depends(get_d
     if user:
         raise HTTPException(status_code=400, detail="Email already exists in User")
 
-    db_user = await create_user(db, org_user)
+    db_user = await create_user(db, org_user, user_id)
 
     return {
         "detail": "User created successfully",
