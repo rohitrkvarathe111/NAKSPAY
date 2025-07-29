@@ -1,10 +1,12 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future import select
 from sqlalchemy import or_, select
+from sqlalchemy.orm import selectinload, joinedload
 from database import get_db
-from users.models import User
+from users.models import User, UserProfile
 from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest, UserProfileUpdate
 from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted
 from help_fun.models import UserTypeEnum
@@ -192,6 +194,54 @@ async def logout(token: str = Depends(oauth2_scheme)):
     return {"detail": "Successfully logged out"}
 
 
+
+
+@router.get("/get_user", summary="Edit current user info")
+async def get_user_profile(
+        db: AsyncSession = Depends(get_db),
+        current_user: dict = Depends(get_current_user)
+    ):
+    if not current_user or not current_user.get("user_id"):
+        raise HTTPException(status_code=401, detail="Invalid or expired access token")
+    
+    user_id = current_user["user_id"]
+    
+    try:
+        result_user = await db.execute(
+            select(UserProfile)
+            .options(joinedload(UserProfile.user)) 
+            .where(UserProfile.user_id == user_id)
+        )
+        users = result_user.scalar_one_or_none()
+
+        if not users or not users.user:
+            raise HTTPException(status_code=404, detail="User or profile not found")
+
+        return {
+            "user_id": users.id,
+            "first_name": users.user.first_name,
+            "last_name": users.user.last_name,
+            "user_type": users.user.user_type,
+            "identity_type": users.identity_type,
+            "address": users.address,
+            "identity_no": users.identity_no,
+            "city": users.city,
+            "identity_img": users.identity_img,
+            "state": users.state,
+            "country": users.country,
+            "dob": users.dob,
+            "pincode": users.pincode,
+            "website": users.website,
+            "gender": users.gender,
+            "profile_img": users.profile_img,
+        }
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="Database error. Please try again later.")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected server error.")
+
+    
+    
 @router.put("/update_user", summary="Edit current user info")
 async def update_user(
         user_update: UserProfileUpdate,

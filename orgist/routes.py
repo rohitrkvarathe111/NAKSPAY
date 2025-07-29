@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.exc import SQLAlchemyError
 from database import get_db
 from orgist.schemas import OrgCreate, OrgCreateResponse, CompanySetup, EditOrgist
 from orgist.crud import create_orgist_user, update_orgist_user
@@ -77,60 +78,67 @@ async def add_orgist(org_user: CompanySetup, db: AsyncSession = Depends(get_db),
 
 
 @router.get("/get_orgist", dependencies=[Security(oauth2_scheme)])
-async def get_orgist_by_id(
-    db: AsyncSession = Depends(get_db),
-    token: str = Security(oauth2_scheme)
-):
-    payload = get_current_user(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    
-    user_id = payload.get("user_id")
-    if not user_id:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    result_user = await db.execute(
-        select(User)
-        .options(joinedload(User.org))
-        .where(User.id == user_id)
-    )
-    users = result_user.scalar_one_or_none()
+async def get_orgist_profile(
+        db: AsyncSession = Depends(get_db),
+        token: str = Security(oauth2_scheme)
+    ):
+    try:
+        payload = get_current_user(token)
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    if not users or not users.orgist_id:
-        raise HTTPException(status_code=404, detail="Orgist not found")
-    
-    org_profile_result = await db.execute(
-        select(OrgistProfile).where(OrgistProfile.orgist_id == users.orgist_id)
-    )
-    org_profile = org_profile_result.scalar_one_or_none()
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    if not org_profile:
-        raise HTTPException(status_code=404, detail="Orgist not found")
+        result_user = await db.execute(
+            select(User)
+            .options(joinedload(User.org))
+            .where(User.id == user_id)
+        )
+        users = result_user.scalar_one_or_none()
 
-    return {
-        "orgist_id": users.orgist_id,
-        "first_name": users.first_name,
-        "last_name": users.last_name,
-        "org_name": users.org.org_name,
-        "org_add": org_profile.org_add,
-        "org_city": org_profile.org_city,
-        "org_state": org_profile.org_state,
-        "org_pin": org_profile.org_pin,
-        "org_country": org_profile.org_country,
-        "org_web": org_profile.org_web,
-        "org_owner": org_profile.org_owner,
-        "org_est_date": org_profile.org_est_date,
-        "org_GSTIN": org_profile.org_GSTIN,
-        "GSTIN_img": org_profile.GSTIN_img,
-        "org_LLPIN": org_profile.org_LLPIN,
-        "LLPIN_img": org_profile.LLPIN_img,
-        "org_CIN": org_profile.org_CIN,
-        "CIN_img": org_profile.CIN_img,
-        "org_PAN": org_profile.org_PAN,
-        "PAN_img": org_profile.PAN_img,
-        "org_logo": org_profile.org_logo,
-    }
+        if not users or not users.orgist_id:
+            raise HTTPException(status_code=404, detail="Orgist not found")
+
+        org_profile_result = await db.execute(
+            select(OrgistProfile).where(OrgistProfile.orgist_id == users.orgist_id)
+        )
+        org_profile = org_profile_result.scalar_one_or_none()
+
+        if not org_profile:
+            raise HTTPException(status_code=404, detail="Orgist not found")
+
+        return {
+            "user_id": users.id,
+            "orgist_id": users.orgist_id,
+            "first_name": users.first_name,
+            "last_name": users.last_name,
+            "org_name": users.org.org_name,
+            "org_add": org_profile.org_add,
+            "org_city": org_profile.org_city,
+            "org_state": org_profile.org_state,
+            "org_pin": org_profile.org_pin,
+            "org_country": org_profile.org_country,
+            "org_web": org_profile.org_web,
+            "org_owner": org_profile.org_owner,
+            "org_est_date": org_profile.org_est_date,
+            "org_GSTIN": org_profile.org_GSTIN,
+            "GSTIN_img": org_profile.GSTIN_img,
+            "org_LLPIN": org_profile.org_LLPIN,
+            "LLPIN_img": org_profile.LLPIN_img,
+            "org_CIN": org_profile.org_CIN,
+            "CIN_img": org_profile.CIN_img,
+            "org_PAN": org_profile.org_PAN,
+            "PAN_img": org_profile.PAN_img,
+            "org_logo": org_profile.org_logo,
+        }
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="Database error while fetching orgist data.")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected server error.")
     
+
 
 @router.put("/update_orgist", status_code=status.HTTP_200_OK)
 async def update_orgist(org_data: EditOrgist, 

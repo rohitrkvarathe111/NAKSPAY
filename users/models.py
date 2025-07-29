@@ -54,3 +54,5 @@ class UserProfile(Base):
     is_active = Column(Boolean, default=True)
     role = Column(String(150), nullable=True)
     preferences = Column(JSON, nullable=True)
+
+    user = relationship("User", backref="profile", foreign_keys=[user_id])
