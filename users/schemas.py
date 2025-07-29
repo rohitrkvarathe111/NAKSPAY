@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime, date
-from users.models import UserTypeEnum, TimezoneEnum, IdentityTypeEnum, GenderEnum
+from help_fun.models import UserTypeEnum, TimezoneEnum, IdentityTypeEnum, GenderEnum
 
 class UserCreate(BaseModel):
     first_name: str

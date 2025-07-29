@@ -1,44 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, func, ForeignKey, Date, JSON
 from database import Base
 from sqlalchemy.orm import relationship
-from enum import Enum
 
-
-
-
-
-class UserTypeEnum(str, Enum):
-    SUPER_ADMIN = "Super Admin"
-    ORGIST_ADMIN = "Orgist Admin"
-    ORGIST_USER = "Orgist User"
-    USER = "User" 
-
-
-class TimezoneEnum(str, Enum):
-    UTC = "UTC"
-    ASIA_KOLKATA = "Asia/Kolkata"
-    US_EASTERN = "US/Eastern"
-    US_CENTRAL = "US/Central"
-    US_PACIFIC = "US/Pacific"
-    EUROPE_LONDON = "Europe/London"
-    EUROPE_BERLIN = "Europe/Berlin"
-    AUSTRALIA_SYDNEY = "Australia/Sydney"
-    ASIA_TOKYO = "Asia/Tokyo"
-
-
-class IdentityTypeEnum(str, Enum):
-    PASSPORT = "passport"
-    DRIVER_LICENSE = "driver_license"
-    AADHAAR = "aadhaar"
-    PAN = "pan"
-    VOTER_ID = "voter_id"
-    GREEN_CARD = "green_card"
-
-class GenderEnum(str, Enum):
-    MALE = "male"
-    FEMALE = "female"
-    OTHER = "other"
-    PREFER_NOT_TO_SAY = "prefer_not_to_say"
 
 
 class User(Base):

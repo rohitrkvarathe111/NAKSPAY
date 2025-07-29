@@ -1,42 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, ForeignKey, Date, Text, JSON
 from database import Base
-from enum import Enum
 from sqlalchemy.orm import relationship
-
-
-
-class OrgCateEnum(str, Enum):
-    COMPANY = "Company"
-    GOVERNMENT_OFFICE = "Government Office"
-    PG = "PG (Paying Guest Accommodation)"
-    HOTEL = "Hotel"
-    MALL = "Mall"
-    CLINIC = "Clinic"
-    SCHOOL = "School"
-
-
-class OrgTypeEnum(str, Enum):
-    PRIVATE = "Private Organization"
-    PUBLIC = "Public Organization"
-    GOVERNMENT = "Government Body"
-    NGO = "Non-Governmental Organization"
-    NON_PROFIT = "Non-Profit Organization"
-    STARTUP = "Startup"
-    MNC = "Multinational Corporation"
-    EDUCATIONAL = "Educational Institution"
-    HEALTHCARE = "Healthcare Organization"
-    FINANCIAL = "Financial Institution"
-
-class OrgIDTypeEnum(str, Enum):
-    PAN = "Permanent Account Number"
-    GST = "Goods and Services Tax Identification Number"
-    CIN = "Corporate Identification Number"
-    TAN = "Tax Deduction and Collection Account Number"
-    MSME = "Micro, Small and Medium Enterprises Registration"
-    UDYAM = "Udyam Registration"
-    NGO_DARPAN = "NGO Darpan ID"
-    FCRA = "Foreign Contribution Regulation Act Number"
-    LLPIN = "Limited Liability Partnership Identification Number"
 
 
 

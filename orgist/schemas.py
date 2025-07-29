@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 from users.schemas import UserCreate
-from orgist.models import OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum
+from help_fun.models import OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum
 from datetime import date
 
 

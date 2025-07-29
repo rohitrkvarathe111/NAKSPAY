@@ -4,9 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import or_, select
 from database import get_db
-from users.models import UserTypeEnum, User
+from users.models import User
 from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest, UserProfileUpdate
 from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted
+from help_fun.models import UserTypeEnum
 from orgist.models import Orgist
 from users.crud import create_user, update_user_profile
 import asyncio

@@ -6,8 +6,9 @@ from sqlalchemy.orm import selectinload, joinedload
 from database import get_db
 from orgist.schemas import OrgCreate, OrgCreateResponse, CompanySetup, EditOrgist
 from orgist.crud import create_orgist_user, update_orgist_user
-from orgist.models import Orgist, OrgistProfile, OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum
-from users.models import UserTypeEnum, User, UserProfile
+from orgist.models import Orgist, OrgistProfile
+from help_fun.models import OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum, UserTypeEnum
+from users.models import User, UserProfile
 from users.routes import oauth2_scheme
 from help_fun.auth_helpers import get_current_user
 import asyncio
