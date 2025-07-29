@@ -27,7 +27,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
     response_description="A JSON message containing a greeting."
 )
 def read_root():
-    return {"message": "Hello this is user"}
+    return {"detail": "Hello this is user"}
 
 
 
@@ -153,6 +153,15 @@ async def refresh_token(request: RefreshTokenRequest,  db: AsyncSession = Depend
     }
 
 
+@router.get("/ping", summary="Ping to check token validity")
+async def ping(current_user: dict = Depends(get_current_user)):
+    return {
+        "status": "ok",
+        "detail": "Token is valid",
+        # "user": current_user
+    }
+
+
 
 @router.get("/me")
 async def get_user_info(token: str = Security(oauth2_scheme)):
@@ -179,4 +188,13 @@ async def logout(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=400, detail="Token is already blacklisted")
     
     blacklist_token(token)
-    return {"msg": "Successfully logged out"}
+    return {"detail": "Successfully logged out"}
+
+
+# @router.put("/update_user", summary="Edit current user info")
+# async def edit_user(
+#     user_update: UserUpdate,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: dict = Depends(get_current_user)
+# ):
+
