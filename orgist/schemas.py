@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime
 from users.schemas import UserCreate
 from orgist.models import OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum
+from datetime import date
 
 
 class OrgCreate(BaseModel):
@@ -26,4 +27,25 @@ class OrgCreateResponse(BaseModel):
 class CompanySetup(BaseModel):
     org: OrgCreate
     user: UserCreate
+
+
+class EditOrgist(BaseModel):
+    org_add: str
+    org_city: str
+    org_state: str
+    org_pin: int
+    org_country: str
+    org_web: str
+    org_owner: str
+    org_est_date: date
+    org_GSTIN: str
+    GSTIN_img: str
+    org_LLPIN: str
+    LLPIN_img: str
+    org_CIN: str
+    CIN_img: str
+    org_PAN: str
+    PAN_img: str
+    org_logo: str
+
 

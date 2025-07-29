@@ -1,8 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from orgist.models import Orgist, OrgistProfile
-from orgist.schemas import OrgCreate, CompanySetup
+from orgist.schemas import OrgCreate, CompanySetup, EditOrgist
 from users.models import User, UserProfile
 from help_fun.auth_helpers import generate_username, hash_password
     
@@ -68,3 +69,31 @@ async def create_orgist_user(db: AsyncSession, org_user: CompanySetup):
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail="Unexpected error: " + str(e))
+    
+
+
+async def update_orgist_user(db: AsyncSession, org_data: EditOrgist, orgist_id: int):
+    try:
+
+        result = await db.execute(
+            select(OrgistProfile).where(OrgistProfile.orgist_id == orgist_id)
+        )
+        org_profile = result.scalar_one_or_none()
+
+        if not org_profile:
+            raise HTTPException(status_code=404, detail="OrgistProfile not found")
+        
+        for field, value in org_data.dict(exclude_unset=True).items():
+            setattr(org_profile, field, value)
+
+        await db.commit()
+        await db.refresh(org_profile)
+        return org_profile
+    
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    
+
+
