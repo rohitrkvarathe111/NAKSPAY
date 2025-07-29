@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime, date
-from help_fun.models import UserTypeEnum, TimezoneEnum, IdentityTypeEnum, GenderEnum
+from help_fun.models import UserTypeEnum, TimezoneEnum, IdentityTypeEnum, GenderEnum, IndiaStateEnum, CountryEnum
 
 class UserCreate(BaseModel):
     first_name: str
@@ -51,8 +51,8 @@ class UserProfileUpdate(BaseModel):
     gender: GenderEnum
     address: str
     city: str
-    state: str
-    country: str
+    state: IndiaStateEnum
+    country: CountryEnum
     pincode: int
     website: str
     

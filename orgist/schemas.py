@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 from users.schemas import UserCreate
-from help_fun.models import OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum
+from help_fun.models import OrgTypeEnum, OrgCateEnum, OrgIDTypeEnum, IndiaStateEnum, CountryEnum
 from datetime import date
 
 
@@ -32,9 +32,9 @@ class CompanySetup(BaseModel):
 class EditOrgist(BaseModel):
     org_add: str
     org_city: str
-    org_state: str
+    org_state: IndiaStateEnum
     org_pin: int
-    org_country: str
+    org_country: CountryEnum
     org_web: str
     org_owner: str
     org_est_date: date
