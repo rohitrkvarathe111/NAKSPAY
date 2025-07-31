@@ -82,7 +82,7 @@ async def add_user(org_user: CreateUserProfile,
 
     email = org_user.email
     stored_otp = redis_client.get_otp(email)
-    print(f"[DEBUG] stored_otp: {stored_otp} (type: {type(stored_otp)}), received: {email_otp} (type: {type(email_otp)})")
+
     if stored_otp != email_otp:
         raise HTTPException(status_code=400, detail="Invalid OTP")
     result = await db.execute(select(User).where(User.email == email))
@@ -93,7 +93,6 @@ async def add_user(org_user: CreateUserProfile,
     return {
         "detail": "User created successfully",
         "first_name": db_user.first_name,
-        "is_email_verified": db_user.is_email_verified,
         "is_phone_verified": db_user.is_phone_verified,
         "created_at": db_user.created_at
     }
@@ -235,7 +234,7 @@ async def logout(token: str = Depends(oauth2_scheme)):
 
 
 @router.post("/reset_password", summary="Reset Password Via OTP on Email", status_code=status.HTTP_200_OK)
-async def change_password(
+async def rest_password(
     email_id: str,
     db: AsyncSession = Depends(get_db),
 ):
@@ -254,7 +253,7 @@ async def change_password(
 
         db.add(user)
         await db.commit()
-        if send_password_reset_email_html(email_id, new_password):
+        if send_password_reset_email_html(email_id, new_password, user.first_name):
             return {"detail": "Password reset email sent successfully", "password": new_password}
         else:
             await db.rollback()

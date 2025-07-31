@@ -12,6 +12,7 @@ async def create_user(db: AsyncSession, user: UserCreate):
 
     user_data = user.dict()
     user_data["user_uc"] = org_uc
+    user_data["is_email_verified"] = True
     user_data["password_hash"] = hash_password(user_data["password_hash"])
     new_user = User(**user_data)
 
