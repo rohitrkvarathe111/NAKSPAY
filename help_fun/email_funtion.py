@@ -78,5 +78,50 @@ def get_welcome_email_html(to_email, verifination_opt):
         raise HTTPException(status_code=500, detail=f"Unexpected error in Content: {str(e)}")
 
 
+
+def send_password_reset_email_html(to_email: str, new_password: str):
+    try:
+        html_content = f"""
+        <html>
+        <body style="font-family: 'Segoe UI', sans-serif; background-color: #f2f4f8; padding: 40px;">
+            <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(90deg, #f44336, #e57373); padding: 30px; color: white; text-align: center;">
+                    <h1 style="margin: 0; font-size: 26px;">Password Changed Successfully</h1>
+                </div>
+                <div style="padding: 30px; text-align: center;">
+                    <p style="font-size: 17px; color: #333;">Hello <strong>{to_email}</strong>,</p>
+                    <p style="font-size: 16px; color: #555;">
+                        Your password has been reset successfully. Please use the new password below to log in:
+                    </p>
+
+                    <div style="margin: 30px auto; display: inline-block; background-color: #f1f1f1; padding: 15px 25px; border-radius: 8px; font-size: 20px; font-weight: bold; letter-spacing: 1px; color: #d32f2f;">
+                        {new_password}
+                    </div>
+
+                    <p style="font-size: 14px; color: #888; margin-top: 20px;">
+                        For your security, please change this password after logging in and do not share it with anyone.
+                    </p>
+                </div>
+                <div style="background-color: #f9f9f9; padding: 20px; text-align: center; color: #aaa;">
+                    <p style="margin: 0;">&copy; 2025 Your Company. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        subject = "Your NAKSPAY Password Has Been Changed"
+        plain_text = f"Hello {to_email}, your password has been changed. Your new password is: {new_password}"
+
+        if main_send_email(to_email, subject, plain_text, html_content):
+            return True
+        else:
+            return False
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error in Content: {str(e)}")
+
+
+
 # to_email = "rohitvarathe99@gmail.com"
 # get_welcome_email_html(to_email, 123456)

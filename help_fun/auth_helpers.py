@@ -39,6 +39,18 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
+def generate_password(email: str, length: int = 10) -> str:
+    if len(email) < 3:
+        raise ValueError("Email must be at least 3 characters long")
+    
+    prefix = email[:3]
+    remaining_length = length - len(prefix)
+    
+    characters = string.ascii_letters + string.digits
+    random_part = ''.join(random.choices(characters, k=remaining_length))
+    
+    return prefix + random_part
+
 
 
 

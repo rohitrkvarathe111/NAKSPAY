@@ -9,10 +9,10 @@ from sqlalchemy.orm import selectinload, joinedload
 from database import get_db
 from users.models import User, UserProfile
 from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest, UserProfileUpdate
-from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted
+from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted, hash_password, generate_password
 from help_fun.models import UserTypeEnum
 from help_fun.redis_helper import RedisClient
-from help_fun.email_funtion import get_welcome_email_html
+from help_fun.email_funtion import get_welcome_email_html, send_password_reset_email_html
 from orgist.models import Orgist
 from users.crud import create_user, update_user_profile
 import asyncio
@@ -233,6 +233,38 @@ async def logout(token: str = Depends(oauth2_scheme)):
 
 
 
+
+@router.post("/reset_password", summary="Reset Password Via OTP on Email", status_code=status.HTTP_200_OK)
+async def change_password(
+    email_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    if not email_id:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    try:
+        result = await db.execute(select(User).where(User.email == email_id))
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        new_password = generate_password(email_id)
+        user.password_hash = hash_password(new_password)
+
+        db.add(user)
+        await db.commit()
+        if send_password_reset_email_html(email_id, new_password):
+            return {"detail": "Password reset email sent successfully", "password": new_password}
+        else:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail="Failed to send password reset email, Please connect with admin")
+
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+    
 
 @router.get("/get_user", summary="Edit current user info")
 async def get_user_profile(
