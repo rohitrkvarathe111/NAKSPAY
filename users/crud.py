@@ -7,7 +7,7 @@ from users.schemas import UserCreate, UserProfileUpdate
 from sqlalchemy import select
 
 
-async def create_user(db: AsyncSession, user: UserCreate, user_id: int):
+async def create_user(db: AsyncSession, user: UserCreate):
     org_uc = await generate_username(user.user_type, user.first_name)
 
     user_data = user.dict()
@@ -16,15 +16,13 @@ async def create_user(db: AsyncSession, user: UserCreate, user_id: int):
     new_user = User(**user_data)
 
     try:
-
         db.add(new_user)
         await db.flush()
 
         created_by = {
-            "created_by": user_id,
-            "updated_by": user_id
+            "created_by": new_user.id,
+            "updated_by": new_user.id
         }
-
         db_user_pro = UserProfile(user_id=new_user.id, **created_by)
         db.add(db_user_pro)
 

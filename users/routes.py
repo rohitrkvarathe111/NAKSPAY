@@ -1,5 +1,6 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, Depends, Security
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Depends, Security, Body
+from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future import select
@@ -10,9 +11,12 @@ from users.models import User, UserProfile
 from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest, UserProfileUpdate
 from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted
 from help_fun.models import UserTypeEnum
+from help_fun.redis_helper import RedisClient
+from help_fun.email_funtion import get_welcome_email_html
 from orgist.models import Orgist
 from users.crud import create_user, update_user_profile
 import asyncio
+import random
 from fastapi.security import OAuth2PasswordBearer
 
 
@@ -21,6 +25,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+redis_client = RedisClient()
 
 
 @router.post(
@@ -33,26 +38,58 @@ def read_root():
     return {"detail": "Hello this is user"}
 
 
+@router.post("/user_verify", status_code=status.HTTP_201_CREATED)
+async def verify_user_via_otp(
+        email_id: Optional[EmailStr] = None,
+        mobile_no: Optional[str] = None,
+        db: AsyncSession = Depends(get_db)
+    ):
+
+    if not (email_id or mobile_no):
+        raise HTTPException(status_code=400, detail="email_id or mobile_no is required")
+
+    try:
+        if email_id:
+            result = await db.execute(select(User).where(User.email == email_id))
+            user = result.scalar_one_or_none()
+            if user:
+                raise HTTPException(status_code=400, detail="Email already exists in User")
+        otp = str(random.randint(100000, 999999))
+        if email_id:
+            if redis_client.set_otp(f"otp:{email_id}", otp, 300):
+                if get_welcome_email_html(email_id, otp):
+                    return {"detail": "OTP sent to email and stored successfully", "otp": otp}
+                else:
+                    raise HTTPException(status_code=500, detail="Failed to send OTP via email")
+            else:
+                raise HTTPException(status_code=500, detail="Failed to store OTP in Redis for email")
+        if mobile_no:
+            if redis_client.set_otp(f"otp:{mobile_no}", otp, 300):
+                # if get_welcome_sms(mobile_no, otp):              # TODO: create after implementing SMS service
+                return {"detail": "OTP sent to mobile and stored successfully", "otp": otp}
+            else:
+                raise HTTPException(status_code=500, detail="Failed to store OTP in Redis for mobile")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
-@router.post("/onboard-user", response_model=OnboardUserResponse, status_code=status.HTTP_201_CREATED, dependencies=[Security(oauth2_scheme)])
-async def add_user(org_user: CreateUserProfile, db: AsyncSession = Depends(get_db), token: str = Security(oauth2_scheme)):
 
-    payload = get_current_user(token)
-    user_id = payload.get("user_id")
-    if payload["user_type"] != UserTypeEnum.SUPER_ADMIN.value:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, 
-                            detail="You are not allowed to create an User. Only Super Admins have permission to perform this action.")
+@router.post("/onboard-user", response_model=OnboardUserResponse, status_code=status.HTTP_201_CREATED)
+async def add_user(org_user: CreateUserProfile,
+            email_otp: str = Body(..., embed=True),
+            db: AsyncSession = Depends(get_db)):
 
     email = org_user.email
+    stored_otp = redis_client.get_otp(email)
+    print(f"[DEBUG] stored_otp: {stored_otp} (type: {type(stored_otp)}), received: {email_otp} (type: {type(email_otp)})")
+    if stored_otp != email_otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
-
     if user:
         raise HTTPException(status_code=400, detail="Email already exists in User")
-
-    db_user = await create_user(db, org_user, user_id)
-
+    db_user = await create_user(db, org_user)
     return {
         "detail": "User created successfully",
         "first_name": db_user.first_name,
@@ -60,6 +97,7 @@ async def add_user(org_user: CreateUserProfile, db: AsyncSession = Depends(get_d
         "is_phone_verified": db_user.is_phone_verified,
         "created_at": db_user.created_at
     }
+
 
 
 @router.post("/login", status_code=status.HTTP_201_CREATED, summary="User Login")
