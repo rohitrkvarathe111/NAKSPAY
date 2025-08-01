@@ -28,15 +28,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 redis_client = RedisClient()
 
 
-@router.post(
-    "/hii",
-    summary="Greet the user",
-    description="This API endpoint returns a simple greeting message to confirm the server is responding.",
-    response_description="A JSON message containing a greeting."
-)
-def read_root():
-    return {"detail": "Hello this is user"}
-
 
 @router.post("/user_verify", status_code=status.HTTP_201_CREATED)
 async def verify_user_via_otp(
@@ -199,23 +190,6 @@ async def ping(current_user: dict = Depends(get_current_user)):
         "status": "ok",
         "detail": "Token is valid",
         # "user": current_user
-    }
-
-
-
-@router.get("/me", summary="Just for fun")
-async def get_user_info(token: str = Security(oauth2_scheme)):
-    payload = verify_token(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid or expired access token")
-
-    return {
-        "user_id": payload.get("user_id"),
-        "first_name": payload.get("first_name"),
-        "last_name": payload.get("last_name"),
-        "user_type": payload.get("user_type"),
-        "user_level": payload.get("user_level"),
-        "timezone": payload.get("timezone")
     }
 
 

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from users import routes as user_routes
 from orgist import routes as org_routes
+from help_fun import routes as helper_routes
 from users.models import User
 from orgist.models import Orgist
 import random
@@ -35,6 +36,7 @@ async def startup():
 
 app.include_router(user_routes.router, prefix="/users", tags=["Users"])
 app.include_router(org_routes.router, prefix="/org", tags=["Orgist"])
+app.include_router(helper_routes.router, prefix="/help", tags=["Help"])
 
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
@@ -45,3 +47,12 @@ def read_root(request: Request):
         "message": message,
         "error": error
     })
+
+@app.post(
+    "/hii",
+    summary="Greet the user",
+    description="This API endpoint returns a simple greeting message to confirm the server is responding.",
+    response_description="A JSON message containing a greeting."
+)
+def read_root():
+    return {"detail": "Hello this is user"}
