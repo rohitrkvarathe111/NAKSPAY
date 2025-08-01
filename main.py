@@ -3,6 +3,7 @@ from users import routes as user_routes
 from orgist import routes as org_routes
 from users.models import User
 from orgist.models import Orgist
+import random
 from database import engine, Base
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -38,7 +39,7 @@ app.include_router(org_routes.router, prefix="/org", tags=["Orgist"])
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
     message = "Oops! The page you are looking for is lost in space."
-    error = 400
+    error = random.randint(1000, 9999)
     return templates.TemplateResponse("index.html", {
         "request": request,
         "message": message,
