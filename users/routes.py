@@ -8,7 +8,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload, joinedload
 from database import get_db
 from users.models import User, UserProfile, Account
-from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest, UserProfileUpdate
+from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest, UserProfileUpdate, GetUser
 from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted, hash_password, generate_password, generate_account_num
 from help_fun.models import UserTypeEnum
 from help_fun.redis_helper import RedisClient
@@ -386,3 +386,79 @@ async def add_account(
             "account_no": getattr(existing_account, "account_no", None),
         }
     }
+
+
+@router.post("/send_request", summary="Mapping with users")
+async def send_request(
+    get_user: GetUser,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Invalid or expired access token")
+
+    user_id = current_user.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User does not exist")
+
+    try:
+        result_user = await db.execute(
+            select(User).where(User.id == user_id)   
+        )
+        user_obj = result_user.scalar_one_or_none()
+
+        if not user_obj:
+            raise HTTPException(status_code=404, detail="User or profile not found")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+    if get_user.email:
+        result_user = await db.execute(
+            select(User).where(User.email == get_user.email)   
+        )
+        sender_obj = result_user.scalar_one_or_none()
+        if not sender_obj:
+            raise HTTPException(status_code=404, detail="No user found with this email")
+        
+
+        # create_mapping_request(user_obj, sender_obj, db)
+        return {
+            "detail": "Successful request sent to user"
+        }
+    
+    elif get_user.phone_number:
+        result_user = await db.execute(
+            select(User).where(User.phone_number == get_user.phone_number)   
+        )
+        sender_obj = result_user.scalar_one_or_none()
+        if not sender_obj:
+            raise HTTPException(status_code=404, detail="No user found with this phone number")
+
+        return {
+            "detail": "Successful request sent to user"
+        }
+    
+    else:
+        raise HTTPException(status_code=400, detail="Either email or phone_number must be provided")
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+

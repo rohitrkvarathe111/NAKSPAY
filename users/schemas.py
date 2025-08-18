@@ -54,4 +54,9 @@ class UserProfileUpdate(BaseModel):
     country: CountryEnum
     pincode: int
     website: str
+
+class GetUser(BaseModel):
+    phone_number: Optional[str] = None
+    email: Optional[EmailStr] = None
+
     

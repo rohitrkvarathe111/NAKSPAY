@@ -77,3 +77,31 @@ class Account(Base):
     
 
 
+
+class UserMapping(Base):
+    __tablename__ = "user_mapping"
+
+    id = Column(Integer, primary_key=True, index=True)
+    orgist_id = Column(Integer, ForeignKey("orgist.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    mapped_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    requested_by = Column(String(50), nullable=False)
+    requested_user_id = Column(Integer, nullable=False)
+    user_status = Column(String(50), nullable=False)
+    map_user_status = Column(String(50), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    user = relationship("User", foreign_keys=[user_id], backref="user_mappings")
+    mapped_user = relationship("User", foreign_keys=[mapped_user_id], backref="mapped_mappings")
+    created_by_user = relationship("User", foreign_keys=[created_by], backref="created_mappings")
+    updated_by_user = relationship("User", foreign_keys=[updated_by], backref="updated_mappings")
+
+    orgist = relationship("Orgist", foreign_keys=[orgist_id], backref="user_mappings")
+    
+
+
+
