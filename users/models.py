@@ -56,3 +56,24 @@ class UserProfile(Base):
     preferences = Column(JSON, nullable=True)
 
     user = relationship("User", backref="profile", foreign_keys=[user_id])
+
+
+
+class Account(Base):
+    __tablename__ = "user_accounts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    orgist_id = Column(Integer, ForeignKey("orgist.id"), nullable=True)
+    full_name = Column(String(200), nullable=False)
+    account_no = Column(String(20), nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    user = relationship("User", backref="account", foreign_keys=[user_id])
+    orgist = relationship("Orgist", backref="account", foreign_keys=[orgist_id])
+    
+
+

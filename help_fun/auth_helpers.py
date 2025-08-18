@@ -30,6 +30,26 @@ async def generate_username(user_type: str, user_name: set) -> str:
 
 
 
+# ------------------------- ACCOUNT NAME GENERATOR ------------------------- #
+
+async def generate_account_num(account_type: str, acc_id: int, name: str) -> str:
+    name = name.split()[0]
+    type_code = account_type[:2].upper()
+    id_part = f"{acc_id:02}"
+
+    ran_latter = ''.join(random.choices(string.ascii_uppercase, k=3))
+
+    if len(name) < 4:
+        pad_length = 4 - len(name)
+        random_letters = ''.join(random.choices(string.ascii_uppercase, k=pad_length))
+        name_part = name.upper() + random_letters
+    else:
+        name_part = name.upper()
+
+    return f"{type_code}{id_part}{ran_latter}-{name_part}"
+
+
+
 # ------------------------- HASH PASSWORD GENERATOR ------------------------- #
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

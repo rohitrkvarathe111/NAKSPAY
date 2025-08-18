@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 from help_fun.auth_helpers import generate_username, hash_password
-from users.models import User, UserProfile
+from users.models import User, UserProfile, Account
 from users.schemas import UserCreate, UserProfileUpdate
 from sqlalchemy import select
 
@@ -63,3 +63,15 @@ async def update_user_profile(db: AsyncSession, user_update: UserProfileUpdate, 
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+async def create_account(db: AsyncSession, account: dict):
+    try:
+        db_info = Account(**account)
+        db.add(db_info)
+        await db.commit()
+        await db.refresh(db_info)
+        return db_info
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Account creation failed: {str(e)}")

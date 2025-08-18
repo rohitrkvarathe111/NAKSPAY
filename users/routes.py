@@ -7,14 +7,14 @@ from sqlalchemy.future import select
 from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload, joinedload
 from database import get_db
-from users.models import User, UserProfile
+from users.models import User, UserProfile, Account
 from users.schemas import CreateUserProfile, OnboardUserResponse, UserLogin, RefreshTokenRequest, UserProfileUpdate
-from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted, hash_password, generate_password
+from help_fun.auth_helpers import verify_password, create_access_token, create_refresh_token, verify_token, get_current_user, blacklist_token, is_token_blacklisted, hash_password, generate_password, generate_account_num
 from help_fun.models import UserTypeEnum
 from help_fun.redis_helper import RedisClient
 from help_fun.email_funtion import get_welcome_email_html, send_password_reset_email_html
 from orgist.models import Orgist
-from users.crud import create_user, update_user_profile
+from users.crud import create_user, update_user_profile, create_account
 import asyncio
 import random
 from fastapi.security import OAuth2PasswordBearer
@@ -304,6 +304,85 @@ async def update_user(
     
 
 
+@router.post("/add_account", summary="Add Account API")
+async def add_account(
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Invalid or expired access token")
 
+    user_id = current_user.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User does not exist")
 
+    try:
+        result_user = await db.execute(
+            select(UserProfile)
+            .options(joinedload(UserProfile.user))
+            .where(UserProfile.user_id == user_id)
+        )
+        user_profile = result_user.scalar_one_or_none()
 
+        if not user_profile:
+            raise HTTPException(status_code=404, detail="User or profile not found")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    if not user_profile.identity_verified:
+        raise HTTPException(status_code=400, detail="Identity verification is required to add account")
+    
+    existing_account_query = await db.execute(
+        select(Account).where(
+            (Account.user_id == user_profile.user_id) |
+            (Account.orgist_id == user_profile.user.orgist_id)
+        )
+    )
+    existing_account = existing_account_query.scalars().first()
+
+    if existing_account:
+        return {
+            "detail": "Account already created",
+            "account": {
+                "id": existing_account.id,
+                "full_name": existing_account.full_name,
+                "orgist_id": getattr(existing_account, "orgist_id", None),
+                "user_id": getattr(existing_account, "user_id", None),
+                "account_no": getattr(existing_account, "account_no", None),
+            }
+        }
+
+    account = {}
+    account["account_no"] = await generate_account_num(
+            user_profile.user.user_type, 
+            user_profile.user.orgist_id, 
+            user_profile.user.first_name
+            )
+    
+    if (
+        user_profile.user.orgist_id 
+        and user_profile.user.user_type in [UserTypeEnum.ORGIST_ADMIN, UserTypeEnum.ORGIST_USER]
+    ):
+        account["orgist_id"] = user_profile.user.orgist_id
+        account["full_name"] = f"{user_profile.user.first_name} {user_profile.user.last_name}"
+        
+    elif user_profile.user_id:
+        account["user_id"] = user_profile.user_id
+        account["full_name"] = f"{user_profile.user.first_name} {user_profile.user.last_name}"
+        
+    else:
+        raise HTTPException(status_code=404, detail="User or Orgist profile not found")
+
+    account_info = await create_account(db=db, account=account)
+
+    return {
+        "detail": "Account added successfully",
+        "account": {
+            "id": account_info.id,
+            "full_name": account_info.full_name,
+            "orgist_id": getattr(account_info, "orgist_id", None),
+            "user_id": getattr(account_info, "user_id", None),
+            "account_no": getattr(existing_account, "account_no", None),
+        }
+    }
