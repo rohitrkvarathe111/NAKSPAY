@@ -78,7 +78,7 @@ def generate_password(email: str, length: int = 10) -> str:
 SECRET_KEY = "NaksPay_Secret_key"
 REFRESH_SECRET_KEY = "NaksPay_Secret_key"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+ACCESS_TOKEN_EXPIRE_MINUTES = 150
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 

@@ -2,9 +2,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 from help_fun.auth_helpers import generate_username, hash_password
-from users.models import User, UserProfile, Account
+from users.models import User, UserProfile, Account, UserMapping
 from users.schemas import UserCreate, UserProfileUpdate
-from sqlalchemy import select
+from sqlalchemy import select, insert, or_
+from help_fun.models import MappedStatus
 
 
 async def create_user(db: AsyncSession, user: UserCreate):
@@ -75,3 +76,49 @@ async def create_account(db: AsyncSession, account: dict):
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Account creation failed: {str(e)}")
+
+
+async def create_mapping_request(
+        db: AsyncSession,
+        sender_obj: User,
+        receiver_obj: User):
+    
+    try:
+        existing = await db.scalar(
+            select(UserMapping).where(
+                or_(
+                    (UserMapping.user_id == sender_obj.id) & (UserMapping.mapped_user_id == receiver_obj.id) & (UserMapping.is_active == True),
+                    (UserMapping.user_id == receiver_obj.id) & (UserMapping.mapped_user_id == sender_obj.id) & (UserMapping.is_active == True),
+                )
+            )
+        )
+
+        if existing:
+            raise HTTPException(status_code=409, detail="Mapping request already exists")
+        
+        main_data = {
+            "requested_user_id": sender_obj.id,
+            "mapped_status": MappedStatus.PENDING.value,
+            "created_by": sender_obj.id,
+            "updated_by": sender_obj.id,
+        }
+        t1 = {
+            **main_data,
+            "orgist_id": sender_obj.orgist_id,
+            "user_id": sender_obj.id,
+            "mapped_user_id": receiver_obj.id,
+            "mapped_orgist_id": receiver_obj.orgist_id,
+        }
+        t2 = {
+            **main_data,
+            "orgist_id": receiver_obj.orgist_id,
+            "user_id": receiver_obj.id,
+            "mapped_user_id": sender_obj.id,
+            "mapped_orgist_id": sender_obj.orgist_id,
+        }
+
+        await db.execute(insert(UserMapping), [t1, t2])
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error creating mapping request: {str(e)}")

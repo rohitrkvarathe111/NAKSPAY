@@ -26,6 +26,13 @@ class User(Base):
 
     org = relationship("Orgist", back_populates="users")
 
+    user_mappings = relationship("UserMapping", foreign_keys="[UserMapping.user_id]", back_populates="user")
+    mapped_mappings = relationship("UserMapping", foreign_keys="[UserMapping.mapped_user_id]", back_populates="mapped_user")
+    requested_user = relationship("UserMapping", foreign_keys="[UserMapping.requested_user_id]", back_populates="requested_user")
+    created_mappings = relationship("UserMapping", foreign_keys="[UserMapping.created_by]", back_populates="created_by_user")
+    updated_mappings = relationship("UserMapping", foreign_keys="[UserMapping.updated_by]", back_populates="updated_by_user")
+
+
 
 
 
@@ -83,25 +90,26 @@ class UserMapping(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     orgist_id = Column(Integer, ForeignKey("orgist.id"), nullable=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    mapped_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    requested_by = Column(String(50), nullable=False)
-    requested_user_id = Column(Integer, nullable=False)
-    user_status = Column(String(50), nullable=False)
-    map_user_status = Column(String(50), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    mapped_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    mapped_orgist_id = Column(Integer, ForeignKey("orgist.id"), nullable=True)
+    requested_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    mapped_status = Column(String(50), nullable=False)
     is_active = Column(Boolean, default=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    user = relationship("User", foreign_keys=[user_id], backref="user_mappings")
-    mapped_user = relationship("User", foreign_keys=[mapped_user_id], backref="mapped_mappings")
-    created_by_user = relationship("User", foreign_keys=[created_by], backref="created_mappings")
-    updated_by_user = relationship("User", foreign_keys=[updated_by], backref="updated_mappings")
+    user = relationship("User", foreign_keys=[user_id], back_populates="user_mappings")
+    mapped_user = relationship("User", foreign_keys=[mapped_user_id], back_populates="mapped_mappings")
+    requested_user = relationship("User", foreign_keys=[requested_user_id], back_populates="requested_user")
+    created_by_user = relationship("User", foreign_keys=[created_by], back_populates="created_mappings")
+    updated_by_user = relationship("User", foreign_keys=[updated_by], back_populates="updated_mappings")
 
-    orgist = relationship("Orgist", foreign_keys=[orgist_id], backref="user_mappings")
-    
+    # for orgist side — you can still use back_populates if Orgist has relationships
+    orgist = relationship("Orgist", foreign_keys=[orgist_id], back_populates="user_mappings")
+    mapped_orgist = relationship("Orgist", foreign_keys=[mapped_orgist_id], back_populates="mapped_mappings")
 
 
 

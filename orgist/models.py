@@ -27,6 +27,8 @@ class Orgist(Base):
 
 
     users = relationship("User", back_populates="org")
+    user_mappings = relationship("UserMapping", foreign_keys="[UserMapping.orgist_id]", back_populates="orgist")
+    mapped_mappings = relationship("UserMapping", foreign_keys="[UserMapping.mapped_orgist_id]", back_populates="mapped_orgist")
 
 
 

@@ -46,6 +46,15 @@ class UserTypeEnum(str, Enum):
     USER = "User" 
 
 
+class MappedStatus(str, Enum):
+    PENDING = "pending"        
+    ACCEPTED = "accepted"      
+    REJECTED = "rejected"     
+    CANCELLED = "cancelled"    
+    BLOCKED = "blocked"        
+
+
+
 class TimezoneEnum(str, Enum):
     UTC = "UTC"
     ASIA_KOLKATA = "Asia/Kolkata"
